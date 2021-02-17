@@ -17,4 +17,3 @@ geocomb-node (this library) is currently not working, keep getting `Error: Modul
   - need to create Napi wrappers for Points and Triangles? Gonna start without methods first, only to hold data
 - geocomb-cpp code is gotten from [project github, main branch](https://github.com/shmibblez/geocomb-cpp), and is in .../src/cpp/geocomb/
 - geocomb-cpp wrappers are in .../src/cpp/
-# geocomb-node

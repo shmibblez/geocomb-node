@@ -1,12 +1,12 @@
 // const geocomb = require("./build/Release/geocomb.node");
 const bindings = require("bindings")("geocomb.node");
 
-console.log("creating icosahedron");
-const ico = new bindings.IcosahedronWrapper();
-console.log("creating point from coords");
-const p = ico.pointFromCoords(71, 27);
-console.log("generating hash");
-console.log(JSON.stringify(ico.hash(p, 10), null, 2));
+// console.log("creating icosahedron");
+// const ico = new bindings.IcosahedronWrapper();
+// console.log("creating point from coords");
+// const p = ico.pointFromCoords(71, 27);
+// console.log("generating hash");
+// console.log(JSON.stringify(ico.hash(p, 10), null, 2));
 
 /**
  * map orientation, changes how hexagons are placed
@@ -44,7 +44,7 @@ export class HashProperties {
  * Icosahedron class, used for hash generation
  */
 export class Icosahedron {
-  ico!: any;
+  ico; // IcosahedronWrapper instance
   mo: MapOrientation;
   rm: RotationMethod;
 
@@ -57,10 +57,9 @@ export class Icosahedron {
     mapOrientation: MapOrientation = "ECEF",
     rotationMethod: RotationMethod = "gnomonic"
   ) {
-    this.ico = new bindings.IcosahedronWrapper(mapOrientation, rotationMethod);
     this.mo = mapOrientation;
     this.rm = rotationMethod;
-    // TODO: init napi IcosahedronWrapper here
+    this.ico = new bindings.IcosahedronWrapper(mapOrientation, rotationMethod);
   }
 
   /**
@@ -99,13 +98,7 @@ export class Point3 {
    * @param y point's y coordinate
    * @param z point's z coordinate
    */
-  constructor(
-    x: number,
-    y: number,
-    z: number,
-    triNum: number = -1,
-    isPC: boolean = false
-  ) {
+  constructor(x: number, y: number, z: number, triNum = -1, isPC = false) {
     this.x = x;
     this.y = y;
     this.z = z;

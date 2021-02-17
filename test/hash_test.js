@@ -1,4 +1,4 @@
-// eslint-disable-next-line @typescript-eslint/no-var-requires, no-undef
+// eslint-disable-next-line no-undef
 const geocomb = require("../lib/index.js");
 // import { HashProperties, Icosahedron, Point3 } from "../lib/index.js";
 const Icosahedron = geocomb.Icosahedron;
