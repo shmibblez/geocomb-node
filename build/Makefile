@@ -324,10 +324,15 @@ ifeq ($(strip $(foreach prefix,$(NO_LOAD),\
                  $(join ^,geocomb.target.mk)))),)
   include geocomb.target.mk
 endif
+ifeq ($(strip $(foreach prefix,$(NO_LOAD),\
+    $(findstring $(join ^,$(prefix)),\
+                 $(join ^,node_modules/node-addon-api/nothing.target.mk)))),)
+  include node_modules/node-addon-api/nothing.target.mk
+endif
 
 quiet_cmd_regen_makefile = ACTION Regenerating $@
 cmd_regen_makefile = cd $(srcdir); /Users/shmibbles/.nvm/versions/node/v12.20.0/lib/node_modules/npm/node_modules/node-gyp/gyp/gyp_main.py -fmake --ignore-environment "-Dlibrary=shared_library" "-Dvisibility=default" "-Dnode_root_dir=/Users/shmibbles/Library/Caches/node-gyp/12.20.0" "-Dnode_gyp_dir=/Users/shmibbles/.nvm/versions/node/v12.20.0/lib/node_modules/npm/node_modules/node-gyp" "-Dnode_lib_file=/Users/shmibbles/Library/Caches/node-gyp/12.20.0/<(target_arch)/node.lib" "-Dmodule_root_dir=/Users/shmibbles/dev/geocomb-node" "-Dnode_engine=v8" "--depth=." "-Goutput_dir=." "--generator-output=build" -I/Users/shmibbles/dev/geocomb-node/build/config.gypi -I/Users/shmibbles/.nvm/versions/node/v12.20.0/lib/node_modules/npm/node_modules/node-gyp/addon.gypi -I/Users/shmibbles/Library/Caches/node-gyp/12.20.0/include/node/common.gypi "--toplevel-dir=." binding.gyp
-Makefile: $(srcdir)/binding.gyp $(srcdir)/../../.nvm/versions/node/v12.20.0/lib/node_modules/npm/node_modules/node-gyp/addon.gypi $(srcdir)/../../Library/Caches/node-gyp/12.20.0/include/node/common.gypi $(srcdir)/build/config.gypi
+Makefile: $(srcdir)/node_modules/node-addon-api/node_api.gyp $(srcdir)/build/config.gypi $(srcdir)/../../Library/Caches/node-gyp/12.20.0/include/node/common.gypi $(srcdir)/../../.nvm/versions/node/v12.20.0/lib/node_modules/npm/node_modules/node-gyp/addon.gypi $(srcdir)/binding.gyp
 	$(call do_cmd,regen_makefile)
 
 # "all" is a concatenation of the "all" targets from all the included

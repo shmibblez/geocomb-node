@@ -21,7 +21,7 @@ void IcosahedronWrapper::Init(Napi::Env env, Napi::Object *exports) {
 }
 
 IcosahedronWrapper::IcosahedronWrapper(const Napi::CallbackInfo &info)
-    : Napi::ObjectWrap<IcosahedronWrapper>(info) {
+    : Napi::ObjectWrap<IcosahedronWrapper>(info), icosahedron(nullptr) {
   Napi::Env env = info.Env();
 
   std::string map_orientation_str = info[0].As<Napi::String>().Utf8Value();
@@ -52,7 +52,7 @@ IcosahedronWrapper::IcosahedronWrapper(const Napi::CallbackInfo &info)
     return;
   }
 
-  this->icosahedron = &Icosahedron(*map_orientation, *rotation_method);
+  // this->icosahedron = &Icosahedron(*map_orientation, *rotation_method);
 }
 
 Napi::Value

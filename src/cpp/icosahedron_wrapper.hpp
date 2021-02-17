@@ -13,6 +13,7 @@ public:
   static void Init(Napi::Env env, Napi::Object *exports);
   IcosahedronWrapper(const Napi::CallbackInfo &info);
 
+private:
   /**
    * @returns Point3 object
    **/
