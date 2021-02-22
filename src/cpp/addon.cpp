@@ -1,9 +1,9 @@
-#include "icosahedron_wrapper.hpp"
+#include "icosahedron.hpp"
 #include <napi.h>
 
 Napi::Object Init(Napi::Env env, Napi::Object exports) {
-  IcosahedronWrapper::Init(env, &exports);
+  Icosahedron::Init(env, &exports);
   return exports;
 };
 
-NODE_API_MODULE(NODE_GYP_MODULE_NAME, Init);
+NODE_API_MODULE(addon, Init)

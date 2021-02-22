@@ -3,24 +3,28 @@
 #ifndef ICOSAHEDRON_HPP
 #define ICOSAHEDRON_HPP
 
+#include "calc_percent.hpp"
 #include "enums.hpp"
+#include "point3.hpp"
+#include "triangle.hpp"
+#include <napi.h>
 #include <vector>
 
-class Triangle;
-class Point3;
-class GPoint3;
+// class Triangle;
+// class Point3;
+// class GPoint3;
 class Phex;
 
-class Icosahedron {
+class Icosahedron : public Napi::ObjectWrap<Icosahedron> {
 
 public:
   const std::vector<Triangle> tris;
   const ico::map_orientation mo;
   const ico::rotation_method rm;
   const ico::hash_type ht;
-  Icosahedron(ico::map_orientation orientation = ico::map_orientation::ECEF,
-              ico::rotation_method rotation = ico::rotation_method::gnomonic,
-              ico::hash_type ht = ico::hash_type::rowCol);
+  // Icosahedron(ico::map_orientation orientation = ico::map_orientation::ECEF,
+  //             ico::rotation_method rotation = ico::rotation_method::gnomonic,
+  //             ico::hash_type ht = ico::hash_type::rowCol);
 
   typedef std::vector<std::vector<GPoint3>> all_icosahedron_points;
   typedef std::vector<std::vector<GPoint3>> lazy_icosahedron_points;
@@ -33,6 +37,32 @@ public:
     ico::map_orientation mo;
     ico::hash_type ht;
   };
+
+  /**
+   * node-addon-api specific stuff below
+   **/
+
+  // TODO: need to cleanup in Napi object destruction callback
+
+  static void Init(Napi::Env env, Napi::Object *exports);
+  Icosahedron(const Napi::CallbackInfo &info);
+
+  /**
+   * @returns Point3 object
+   **/
+  Napi::Value pointFromCoords(const Napi::CallbackInfo &info);
+  /**
+   * @returns HashProperties object
+   **/
+  Napi::Value hash(const Napi::CallbackInfo &info);
+
+  /**
+   * node-addon-api specific stuff above
+   **/
+
+  // TODO: need to make all_phexes too, but will require some more work,
+  // implement later also, something useful: in cpp library, make phex have a
+  // Phex::hash_properties, so you can get hash properties from phex
 
   /**
    * @param mo map_orientation

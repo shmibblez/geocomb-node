@@ -4,7 +4,7 @@
 #define TRIANGLE_HPP
 
 #include "enums.hpp"
-#include "icosahedron.hpp"
+// #include "icosahedron.hpp"
 #include "point3.hpp"
 #include <any>
 #include <cmath>

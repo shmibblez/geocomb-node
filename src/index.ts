@@ -1,5 +1,5 @@
-// const geocomb = require("./build/Release/geocomb.node");
-const bindings = require("bindings")("geocomb.node");
+// const bindings = require("build/Release/geocomb.node");
+const bindings = require("bindings")("geocomb");
 
 // console.log("creating icosahedron");
 // const ico = new bindings.IcosahedronWrapper();
@@ -59,7 +59,7 @@ export class Icosahedron {
   ) {
     this.mo = mapOrientation;
     this.rm = rotationMethod;
-    this.ico = new bindings.IcosahedronWrapper(mapOrientation, rotationMethod);
+    this.ico = new bindings.Icosahedron(mapOrientation, rotationMethod);
   }
 
   /**

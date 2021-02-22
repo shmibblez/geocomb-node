@@ -43,8 +43,8 @@ CalcPercent::vec_side_components(const Triangle &tri, const Point3 &i) {
 
 CalcPercent::calc_percent_result CalcPercent::gnomonic(const Triangle &tri,
                                                        const Point3 &p) {
-  int precision = std::numeric_limits<double>::max_digits10;
-  std::cout.precision(precision);
+  // int precision = std::numeric_limits<double>::max_digits10;
+  // std::cout.precision(precision);
   // std::cout << "tri.A coords:"
   //           << "\n  x: " << std::fixed << tri.A.x << "\n  y: " << tri.A.y
   //           << "\n  z: " << std::fixed << tri.A.z << "\n";
