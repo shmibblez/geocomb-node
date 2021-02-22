@@ -15,4 +15,4 @@ in geocomb-cpp need to replace all
 ```for (const Triangle t : this->tris) {...}```
 with 
 ```for (const Triangle &t : this->tris) {...}```
-and need to clean up some other stuff too
+so don't copy tri objects, and need to clean up some other stuff too
