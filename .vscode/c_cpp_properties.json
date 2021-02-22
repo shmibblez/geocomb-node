@@ -4,7 +4,6 @@
       "name": "Mac",
       "includePath": [
         "${workspaceFolder}/src/cpp",
-        "${workspaceFolder}/src/cpp/geocomb",
         "${workspaceFolder}/node_modules/node-addon-api",
         "/Users/shmibbles/.nvm/versions/node/v12.20.0/include/node"
       ],
