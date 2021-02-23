@@ -8,8 +8,6 @@
 #include "point3.hpp"
 #include <vector>
 
-// class Icosahedron;
-
 class Phex {
 
 public:

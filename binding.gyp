@@ -5,8 +5,6 @@
             # ["src/cpp/**", "src/cpp/geocomb/**"],
             "sources": ["src/cpp/addon.cpp",
                         "src/cpp/icosahedron.cpp",
-                        "src/cpp/calc_percent.cpp",
-                        "src/cpp/constants.cpp",
                         "src/cpp/phex.cpp",
                         "src/cpp/point3.cpp",
                         "src/cpp/triangle.cpp"],

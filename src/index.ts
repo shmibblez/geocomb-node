@@ -1,13 +1,6 @@
 // const bindings = require("build/Release/geocomb.node");
 const bindings = require("bindings")("geocomb");
 
-// console.log("creating icosahedron");
-// const ico = new bindings.IcosahedronWrapper();
-// console.log("creating point from coords");
-// const p = ico.pointFromCoords(71, 27);
-// console.log("generating hash");
-// console.log(JSON.stringify(ico.hash(p, 10), null, 2));
-
 /**
  * map orientation, changes how hexagons are placed
  * - ECEF (default): standard way of doing stuff, still pretty good

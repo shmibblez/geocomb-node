@@ -12,102 +12,6 @@ using std::cos;
 using std::sin;
 using std::trunc;
 
-void Icosahedron::Init(Napi::Env env, Napi::Object *exports) {
-  Napi::Function func =
-      DefineClass(env, "Icosahedron",
-                  {
-                      Icosahedron::InstanceMethod(
-                          "pointFromCoords", &Icosahedron::pointFromCoords),
-                      Icosahedron::InstanceMethod("hash", &Icosahedron::hash),
-                  });
-
-  // Napi::FunctionReference *constructor = new Napi::FunctionReference();
-  // *constructor = Napi::Persistent(func);
-  // env.SetInstanceData(constructor);
-
-  Napi::String name = Napi::String::New(env, "Icosahedron");
-  exports->Set(name, func);
-}
-
-Icosahedron::Icosahedron(const Napi::CallbackInfo &info)
-    : Napi::ObjectWrap<Icosahedron>(info), mo(ico::map_orientation::ECEF),
-      rm(ico::rotation_method::gnomonic), ht(ico::hash_type::rowCol),
-      tris(Icosahedron::triangles()) {
-  Napi::Env env = info.Env();
-
-  std::string map_orientation_str = info[0].As<Napi::String>().Utf8Value();
-  std::string rotation_method_str = info[1].As<Napi::String>().Utf8Value();
-
-  if (map_orientation_str == "dymaxion") {
-    Napi::TypeError::New(env,
-                         "\"dymaxion\" map orientation currently unsupported")
-        .ThrowAsJavaScriptException();
-    return;
-  } else if (map_orientation_str != "dymaxion" &&
-             map_orientation_str != "ECEF") {
-    Napi::TypeError::New(env, "unknown map orientation, recognized map "
-                              "orientations are \"ECEF\" and \"dymaxion\"")
-        .ThrowAsJavaScriptException();
-    return;
-  }
-
-  if (rotation_method_str == "quaternion") {
-    Napi::TypeError::New(env,
-                         "\"quaternion\" rotation method currently unsupported")
-        .ThrowAsJavaScriptException();
-    return;
-  } else if (rotation_method_str != "quaternion" &&
-             rotation_method_str != "gnomonic") {
-    Napi::TypeError::New(env, "unknown rotation method, recognized rotation "
-                              "methods are \"gnomonic\" and \"quaternion\"")
-        .ThrowAsJavaScriptException();
-    return;
-  }
-}
-
-Napi::Value Icosahedron::pointFromCoords(const Napi::CallbackInfo &info) {
-
-  const double lat = info[0].As<Napi::Number>().DoubleValue();
-  const double lon = info[1].As<Napi::Number>().DoubleValue();
-
-  const Point3 p = this->point_from_coords(lat, lon);
-
-  Napi::Env env = info.Env();
-  Napi::Object obj = Napi::Object::New(env);
-  obj.Set("x", p.x);
-  obj.Set("y", p.y);
-  obj.Set("z", p.z);
-  obj.Set("triNum", p.tri_num);
-  obj.Set("isPC", p.is_pc);
-
-  return obj;
-}
-
-Napi::Value Icosahedron::hash(const Napi::CallbackInfo &info) {
-  const Napi::Object obj = info[0].As<Napi::Object>();
-  const long double x = obj.Get("x").As<Napi::Number>().DoubleValue();
-  const long double y = obj.Get("y").As<Napi::Number>().DoubleValue();
-  const long double z = obj.Get("z").As<Napi::Number>().DoubleValue();
-
-  Point3 p(x, y, z);
-  const int res = info[1].As<Napi::Number>().Int32Value();
-
-  Icosahedron::hash_properties props = this->hash(p, res);
-
-  const Napi::Env env = info.Env();
-  Napi::Object hash_props = Napi::Object::New(env);
-  hash_props.Set("res", props.res);
-  hash_props.Set("row", props.row);
-  hash_props.Set("col", props.col);
-  hash_props.Set("mo",
-                 props.mo == ico::map_orientation::ECEF ? "ECEF" : "dymaxion");
-  hash_props.Set("rm", props.rm == ico::rotation_method::gnomonic
-                           ? "gnomonic"
-                           : "quaternion");
-
-  return hash_props;
-}
-
 std::string Icosahedron::map_orientation_key(ico::map_orientation mo) {
   return std::vector<std::string>({"e", "d"})[mo];
 }
@@ -121,16 +25,16 @@ std::string Icosahedron::rotation_method_key(ico::rotation_method rm) {
  * @returns vector of icosahedron triangles
  */
 std::vector<Triangle> Icosahedron::triangles() {
-  const double gr = constants::golden_ratio;
-  const double r = constants::radius;
-  const double factor = r / sqrt(gr * gr + 1.0);
+  const long double gr = constants::golden_ratio;
+  const long double r = constants::radius;
+  const long double factor = r / sqrt(gr * gr + 1.0);
 
-  const double &_1 = factor;
-  const double _gr = gr * factor;
+  const long double &_1 = factor;
+  const long double _gr = gr * factor;
 
   // rotate all base points so north pole aligns with z axis (this is angle
   // between vectors)
-  const double rads = -acos(gr / sqrt(1.0 + gr * gr));
+  const long double rads = -acos(gr / sqrt(1.0 + gr * gr));
   /**
    *     how points are numbered
    *        N       N       N       N       N           - all top pent tris
@@ -275,7 +179,7 @@ Triangle Icosahedron::triangle(const int indx) {
   return Icosahedron::triangles()[indx];
 }
 
-Point3 Icosahedron::point_from_coords(double lat, double lon) const {
+Point3 Icosahedron::point_from_coords(long double lat, long double lon) const {
   if (!(lat <= 90 && lat >= -90)) {
     throw std::invalid_argument("lat must be between -90 and 90");
   }
@@ -284,10 +188,10 @@ Point3 Icosahedron::point_from_coords(double lat, double lon) const {
   }
   lat = hexmapf::deg_2_rad(lat);
   lon = hexmapf::deg_2_rad(lon);
-  const double r = constants::radius;
-  const double x = r * cos(lat) * cos(lon);
-  const double y = r * cos(lat) * sin(lon);
-  const double z = r * sin(lat);
+  const long double r = constants::radius;
+  const long double x = r * cos(lat) * cos(lon);
+  const long double y = r * cos(lat) * sin(lon);
+  const long double z = r * sin(lat);
   return Point3(x, y, z);
 }
 
@@ -307,19 +211,18 @@ Icosahedron::hash_properties Icosahedron::hash(Point3 p, int res) {
             << "\n  row: " << cp.row << "\n  col: " << cp.col
             << "\n  res: " << cp.res << "\n  isVert: " << cp.is_pc << "\ns";
 
-  return Icosahedron::hash_properties{.res = res,
-                                      .row = cp.row,
-                                      .col = cp.col,
-                                      .rm = this->rm,
-                                      .mo = this->mo,
-                                      .ht = this->ht};
+  return Icosahedron::hash_properties{
+      .res = res,
+      .row = cp.row,
+      .col = cp.col,
+      .rm = this->rm,
+      .mo = this->mo,
+  };
 }
 
 std::vector<std::vector<GPoint3>>
 Icosahedron::lazy_points_around(Point3 p, int res) const {
-  std::cout << "\n>>>Icosahedron::lazy_points_around\n";
   const Triangle tri = this->containing_triangle(p);
-  std::cout << "containing tri num: " << std::to_string(tri.num) << "\n";
   const int nd = hexmapf::num_divisions(res);
   // points and lazy range start indexes in relation to tri.C
   Triangle::lazy_points_around_result tri_points_around =
@@ -343,10 +246,10 @@ Icosahedron::lazy_points_around(Point3 p, int res) const {
     // TODO: test if works, point numbering and pushing to vecs
     std::vector<std::vector<GPoint3>> indexed_points;
     const int row_off = lower_vert;
-    for (int r = 0; r < points.size() && points[0].size() > 0; r++) {
+    for (unsigned int r = 0; r < points.size() && points[0].size() > 0; r++) {
       const int row = row_off + r;
       indexed_points.push_back(std::vector<GPoint3>());
-      for (int c = 0; c < points[r].size(); c++) {
+      for (unsigned int c = 0; c < points[r].size(); c++) {
         int col = (lower_vert + r) * tri.num + lower_horz + c;
         if (col == row * 5) {
           col = 0;
@@ -358,7 +261,6 @@ Icosahedron::lazy_points_around(Point3 p, int res) const {
         indexed_points[r].push_back(new_point);
       }
     }
-    std::cout << "<<<Icosahedron::lazy_points_around\n\n";
     return indexed_points;
   };
   // index center up
@@ -370,10 +272,10 @@ Icosahedron::lazy_points_around(Point3 p, int res) const {
     const int row_off = nd + lower_vert;
     const int col_off =
         nd * (num_tris_before / 2) + (nd - lower_vert) + lower_horz;
-    for (int r = 0; r < points.size() && points[r].size() > 0; r++) {
+    for (unsigned int r = 0; r < points.size() && points[r].size() > 0; r++) {
       const int row = row_off + r;
       indexed_points.push_back(std::vector<GPoint3>());
-      for (int c = 0; c < points[r].size(); c++) {
+      for (unsigned int c = 0; c < points[r].size(); c++) {
         int col = col_off + c - r;
         if (col == nd * 5) {
           col = 0;
@@ -395,10 +297,10 @@ Icosahedron::lazy_points_around(Point3 p, int res) const {
     const int num_tris_before = hexmapf::closest_even_num(tri.num - 5);
     const int row_off = nd + lower_vert;
     const int col_off = nd * (num_tris_before / 2);
-    for (int r = 0; r < points.size() && points[r].size() > 0; r++) {
+    for (unsigned int r = 0; r < points.size() && points[r].size() > 0; r++) {
       const int row = row_off + r;
       indexed_points.push_back(std::vector<GPoint3>());
-      for (int c = 0; c < points[r].size(); c++) {
+      for (unsigned int c = 0; c < points[r].size(); c++) {
         int col = col_off + nd * 2 - row - lower_horz - c;
         if (col == nd * 5) {
           col = 0;
@@ -418,10 +320,10 @@ Icosahedron::lazy_points_around(Point3 p, int res) const {
                              &tri]() -> std::vector<std::vector<GPoint3>> {
     std::vector<std::vector<GPoint3>> indexed_points;
     const int row_off = nd * 2 + lower_vert;
-    for (int r = 0; r < points.size() && points[r].size() > 0; r++) {
+    for (unsigned int r = 0; r < points.size() && points[r].size() > 0; r++) {
       const int row = row_off + r;
       indexed_points.push_back(std::vector<GPoint3>());
-      for (int c = 0; c < points[r].size(); c++) {
+      for (unsigned int c = 0; c < points[r].size(); c++) {
         int col = (nd - lower_vert - r) * (tri.num - 15 + 1) - lower_horz - c;
         if (col == (nd * 3 - row) * 5) {
           col = 0;
@@ -463,7 +365,7 @@ Icosahedron::lazy_points_around(Point3 p, int res) const {
 }
 
 Triangle Icosahedron::containing_triangle(Point3 p) const {
-  for (const Triangle &t : this->tris) {
+  for (const Triangle t : this->tris) {
     if (t.contains_point(p)) {
       std::cout << "found containing tri, tri num: " << std::to_string(t.num)
                 << "\n";
@@ -549,7 +451,7 @@ GPoint3 Icosahedron::parse_hash(Icosahedron::hash_properties hash) const {
 Icosahedron::all_icosahedron_points Icosahedron::all_points(int res) const {
   Icosahedron::all_icosahedron_points points;
   const int offset_amount = res * 3;
-  for (const Triangle &t : this->tris) {
+  for (const Triangle t : this->tris) {
     int offset;
     int range;
     std::vector<std::vector<Point3>> ps = t.all_points(res, this->mo, this->rm);
@@ -576,14 +478,14 @@ Icosahedron::all_icosahedron_points Icosahedron::all_points(int res) const {
     }
     };
     for (int fl = 0; fl < range; fl++) {
-      if (points.size() < offset + fl) {
+      if ((signed)points.size() < offset + fl) {
         // since tris start from top to bottom, this shouldn't skip any indices
         // -> adding in order, should do the same as js version (original)
         points.push_back(std::vector<GPoint3>());
       }
       Point3 popped = ps[fl].back();
       ps[fl].pop_back();
-      for (int sl = 0; sl < ps[fl].size(); sl++) {
+      for (unsigned int sl = 0; sl < ps[fl].size(); sl++) {
         // adds gpoint3, storing indexes (for referencing other points)
         points[offset + fl].push_back(
             GPoint3(ps[fl][sl].x, ps[fl][sl].y, ps[fl][sl].z, res, offset + fl,
@@ -619,8 +521,8 @@ Phex Icosahedron::not_lazy_containing_phex(Point3 p, int res) const {
   const std::vector<Phex> phexes = Phex::all_phexes(all_points);
 
   std::unique_ptr<Phex> closest_phex;
-  double dist;
-  double smallest_dist = constants::radius * 2;
+  long double dist;
+  long double smallest_dist = constants::radius * 2;
   for (Phex phex : phexes) {
     dist = p.distance(phex.center);
     if (dist < smallest_dist) {
@@ -633,4 +535,99 @@ Phex Icosahedron::not_lazy_containing_phex(Point3 p, int res) const {
   // return closest phex value (copy)
   // need to check though, if RVO is applied here we're screwed
   return *closest_phex;
+}
+
+void Icosahedron::Init(Napi::Env env, Napi::Object *exports) {
+  Napi::Function func =
+      DefineClass(env, "Icosahedron",
+                  {
+                      Icosahedron::InstanceMethod(
+                          "pointFromCoords", &Icosahedron::pointFromCoords),
+                      Icosahedron::InstanceMethod("hash", &Icosahedron::hash),
+                  });
+
+  // Napi::FunctionReference *constructor = new Napi::FunctionReference();
+  // *constructor = Napi::Persistent(func);
+  // env.SetInstanceData(constructor);
+
+  Napi::String name = Napi::String::New(env, "Icosahedron");
+  exports->Set(name, func);
+}
+
+Icosahedron::Icosahedron(const Napi::CallbackInfo &info)
+    : Napi::ObjectWrap<Icosahedron>(info), mo(ico::map_orientation::ECEF),
+      rm(ico::rotation_method::gnomonic), tris(Icosahedron::triangles()) {
+  Napi::Env env = info.Env();
+
+  std::string map_orientation_str = info[0].As<Napi::String>().Utf8Value();
+  std::string rotation_method_str = info[1].As<Napi::String>().Utf8Value();
+
+  if (map_orientation_str == "dymaxion") {
+    Napi::TypeError::New(env,
+                         "\"dymaxion\" map orientation currently unsupported")
+        .ThrowAsJavaScriptException();
+    return;
+  } else if (map_orientation_str != "dymaxion" &&
+             map_orientation_str != "ECEF") {
+    Napi::TypeError::New(env, "unknown map orientation, recognized map "
+                              "orientations are \"ECEF\" and \"dymaxion\"")
+        .ThrowAsJavaScriptException();
+    return;
+  }
+
+  if (rotation_method_str == "quaternion") {
+    Napi::TypeError::New(env,
+                         "\"quaternion\" rotation method currently unsupported")
+        .ThrowAsJavaScriptException();
+    return;
+  } else if (rotation_method_str != "quaternion" &&
+             rotation_method_str != "gnomonic") {
+    Napi::TypeError::New(env, "unknown rotation method, recognized rotation "
+                              "methods are \"gnomonic\" and \"quaternion\"")
+        .ThrowAsJavaScriptException();
+    return;
+  }
+}
+
+Napi::Value Icosahedron::pointFromCoords(const Napi::CallbackInfo &info) {
+
+  const double lat = info[0].As<Napi::Number>().DoubleValue();
+  const double lon = info[1].As<Napi::Number>().DoubleValue();
+
+  const Point3 p = this->point_from_coords(lat, lon);
+
+  Napi::Env env = info.Env();
+  Napi::Object obj = Napi::Object::New(env);
+  obj.Set("x", p.x);
+  obj.Set("y", p.y);
+  obj.Set("z", p.z);
+  obj.Set("triNum", p.tri_num);
+  obj.Set("isPC", p.is_pc);
+
+  return obj;
+}
+
+Napi::Value Icosahedron::hash(const Napi::CallbackInfo &info) {
+  const Napi::Object obj = info[0].As<Napi::Object>();
+  const long double x = obj.Get("x").As<Napi::Number>().DoubleValue();
+  const long double y = obj.Get("y").As<Napi::Number>().DoubleValue();
+  const long double z = obj.Get("z").As<Napi::Number>().DoubleValue();
+
+  Point3 p(x, y, z);
+  const int res = info[1].As<Napi::Number>().Int32Value();
+
+  Icosahedron::hash_properties props = this->hash(p, res);
+
+  const Napi::Env env = info.Env();
+  Napi::Object hash_props = Napi::Object::New(env);
+  hash_props.Set("res", props.res);
+  hash_props.Set("row", props.row);
+  hash_props.Set("col", props.col);
+  hash_props.Set("mo",
+                 props.mo == ico::map_orientation::ECEF ? "ECEF" : "dymaxion");
+  hash_props.Set("rm", props.rm == ico::rotation_method::gnomonic
+                           ? "gnomonic"
+                           : "quaternion");
+
+  return hash_props;
 }

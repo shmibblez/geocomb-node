@@ -120,8 +120,6 @@ INCS_Release := \
 OBJS := \
 	$(obj).target/$(TARGET)/src/cpp/addon.o \
 	$(obj).target/$(TARGET)/src/cpp/icosahedron.o \
-	$(obj).target/$(TARGET)/src/cpp/calc_percent.o \
-	$(obj).target/$(TARGET)/src/cpp/constants.o \
 	$(obj).target/$(TARGET)/src/cpp/phex.o \
 	$(obj).target/$(TARGET)/src/cpp/point3.o \
 	$(obj).target/$(TARGET)/src/cpp/triangle.o
