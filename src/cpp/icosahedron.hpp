@@ -15,6 +15,7 @@ class Phex;
 class Icosahedron : public Napi::ObjectWrap<Icosahedron> {
 
 public:
+public:
   const std::vector<Triangle> tris;
   const ico::map_orientation mo;
   const ico::rotation_method rm;
@@ -109,7 +110,25 @@ public:
   Phex not_lazy_containing_phex(Point3 p, int res) const;
 
   /**
-   * node-addon-api specific stuff below
+   *
+   *
+   *
+   *
+   *
+   *
+   *
+   *
+   *
+   * IMPORTANT: node-addon-api specific code begins here
+   *
+   *
+   *
+   *
+   *
+   *
+   *
+   *
+   *
    **/
 
   // TODO: need to cleanup in Napi object destruction callback
@@ -118,13 +137,20 @@ public:
   Icosahedron(const Napi::CallbackInfo &info);
 
   /**
+   * @param [latitude, longitude]
    * @returns Point3 object
    **/
   Napi::Value pointFromCoords(const Napi::CallbackInfo &info);
   /**
+   * @param Point3 object
    * @returns HashProperties object
    **/
   Napi::Value hash(const Napi::CallbackInfo &info);
+  /**
+   * @param HashProperties object
+   * @returns GPoint3 object
+   **/
+  Napi::Value parseHash(const Napi::CallbackInfo &info);
 
   /**
    * node-addon-api specific stuff above

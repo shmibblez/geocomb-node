@@ -1,6 +1,6 @@
 {
   "name": "geocomb-node",
-  "version": "0.0.1",
+  "version": "0.0.1-alpha.0.1",
   "description": "hexagon geohashing (depends on geocomb-cpp)",
   "main": "lib/index.js",
   "scripts": {
@@ -16,6 +16,10 @@
   ],
   "author": "shmibblez",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/shmibblez/geocomb-node"
+  },
   "devDependencies": {
     "@types/node": "^14.14.28",
     "@typescript-eslint/eslint-plugin": "^4.15.0",

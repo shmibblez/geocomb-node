@@ -73,6 +73,16 @@ export class Icosahedron {
   hash(point: Point3, res: number): HashProperties {
     return this.ico.hash(point, res);
   }
+
+  /**
+   * parses hash, returning GPoint3 that's also phex center
+   * @throws errors if invalid rotation methods or row or col numbers are provided
+   * @param props hash properties
+   * @returns GPoint3 that's also a phex center
+   */
+  parseHash(props: HashProperties): GPoint3 {
+    return this.ico.parseHash(props);
+  }
 }
 
 /**

@@ -1,17 +1,21 @@
 #include "point3.hpp"
 #include "triangle.hpp"
+#include <cmath>
 #include <functional>
 #include <limits>
 #include <string>
 
 #include <iostream>
 
+using std::acos;
+using std::atan2;
 using std::sqrt;
 
 GPoint3::GPoint3(long double x, long double y, long double z, int res, int row,
                  int col, ico::map_orientation mo, ico::rotation_method rm,
                  bool is_pc, int tri_num)
-    : Point3::Point3(x, y, z, is_pc, tri_num), res(res), row(row), col(col) {}
+    : Point3::Point3(x, y, z, is_pc, tri_num), res(res), row(row), col(col),
+      mo(mo), rm(rm) {}
 
 GPoint3::GPoint3()
     : Point3::Point3(std::numeric_limits<long double>::infinity(),
@@ -82,13 +86,33 @@ Point3::Point3(long double x, long double y, long double z, bool is_pc,
 
 Point3::~Point3() {}
 
-// struct Point3::lazy_row_points_result {
-//   std::vector<Point3> row_points;
-//   int lower_indx;
-//   lazy_row_points_result(std::vector<Point3> row_points, int lower_indx)
-//       : row_points(row_points), lower_indx(lower_indx){};
-//   ~lazy_row_points_result();
-// }
+long double Point3::get_radius() {
+  return sqrt(this->x * this->x + this->y * this->y + this->z * this->z);
+}
+
+/**
+ * from here: [https://gis.stackexchange.com/a/120685]
+ *
+ * (longitude)
+ * λ = [arctan(y / x) * 360 / 2π]
+ *   = [atan2(y, x) * 360 / 2π] to account for quadrant or div-by-zero issues
+ *
+ * (latitude)
+ * φ = 90 - arccos(z / r) * 360 / 2π
+ *   = arcsin(z / r) * 360 / 2π
+ **/
+
+long double Point3::get_lat() {
+  const long double r = this->get_radius();
+  if (r == 0) {
+    return 0;
+  }
+  return 90 - acos(this->z / r) * (180 / constants::PI);
+}
+
+long double Point3::get_lon() {
+  return atan2(this->y, this->x) * (180 / constants::PI);
+}
 
 long double Point3::angle_between(const Point3 &p) const {
   long double inner = this->dot(p) / (this->mag() * p.mag());
@@ -152,9 +176,15 @@ void Point3::cross(const Point3 &p) {
 
 void Point3::unit() {
   const long double mag = this->mag();
-  x /= mag;
-  y /= mag;
-  z /= mag;
+  if (mag == 0) {
+    x = 0;
+    y = 0;
+    z = 0;
+  } else {
+    x /= mag;
+    y /= mag;
+    z /= mag;
+  }
 }
 
 void Point3::mult_by(const long double num) {
@@ -179,10 +209,11 @@ void Point3::spheriphy() {
   this->mult_by(constants::radius);
 }
 
-void Point3::spherify1D(std::vector<Point3> &points) {
+std::vector<Point3> Point3::spherify1D(std::vector<Point3> points) {
   for (Point3 &p : points) {
     p.spheriphy();
   }
+  return points;
 }
 
 bool Point3::on_opposite_side(const Point3 &p) const {
@@ -296,7 +327,7 @@ std::vector<Point3> Point3::all_side_points_gnomonic(const Point3 &above,
     rotated.add(A);
     // spheriphy point since gnomonic generates points between tri sides (along
     // line, not circle)
-    rotated.spheriphy();
+    // rotated.spheriphy();
     point_arr.push_back(rotated);
   }
   // add last point
@@ -313,13 +344,15 @@ Point3::lazy_side_points_gnomonic(const Triangle &tri, const int center,
   if (lower == -1) {
     lower = center - lazy_range;
   }
-  if (lower < 0)
+  if (lower < 0) {
     lower = 0;
+  }
   if (upper == -1) {
     upper = center + lazy_range;
   }
-  if (upper > nd)
+  if (upper > nd) {
     upper = nd;
+  }
 
   const std::function generate_side_points =
       [&nd, &lower, &upper](const Point3 &top,
@@ -350,16 +383,14 @@ Point3::lazy_side_points_gnomonic(const Triangle &tri, const int center,
     const long double dist_unit = dist / nd;
 
     long double d;
-    // std::unique_ptr<Point3> rotated;
     for (int c = lower; c <= upper; c++) {
       d = dist_unit * c;
-      // rotated.reset(&uAB);
       Point3 rotated = uAB;
       rotated.mult_by(d);
       rotated.add(A);
       // spheriphy point since gnomonic generates points between tri sides
       // (along line, not circle)
-      rotated.spheriphy();
+      // rotated.spheriphy();
       point_arr.push_back(rotated);
     }
 
@@ -399,7 +430,7 @@ std::vector<Point3> Point3::all_row_points_gnomonic(const Point3 &left,
     Point3 rotated = uLR;
     rotated.mult_by(d);
     rotated.add(left);
-    rotated.spheriphy();
+    // rotated.spheriphy();
     points.push_back(rotated);
   }
   // add last point
@@ -444,9 +475,10 @@ Point3::lazy_row_points_gnomonic(const int center, const Point3 &left,
     Point3 rotated = uLR;
     rotated.mult_by(d);
     rotated.add(left);
-    rotated.spheriphy();
+    // rotated.spheriphy();
     point_arr.push_back(rotated);
   }
+
   return {.row_points = point_arr, .lower_indx = lower};
 }
 
@@ -486,14 +518,14 @@ Point3::lazy_side_points_quaternion(const Triangle &tri, const int center,
                                     int lower, int upper) {
   const int nd = hexmapf::num_divisions(res);
   if (lower == -1) {
-    lower = 0;
+    lower = center - lazy_range;
   }
   if (lower < 0) {
     lower = 0;
   }
 
   if (upper == -1) {
-    upper = nd;
+    upper = center + lazy_range;
   }
   if (upper > nd) {
     upper = nd;
@@ -567,14 +599,14 @@ Point3::lazy_row_points_quaternion(const int center, const Point3 &left,
   }
 
   if (lower == -1) {
-    lower = 0;
+    lower = center - lazy_range;
   }
   if (lower < 0) {
     lower = 0;
   }
 
   if (upper == -1) {
-    upper = num_divisions;
+    upper = center + lazy_range;
   }
   if (upper > num_divisions || upper < 0) {
     upper = num_divisions;

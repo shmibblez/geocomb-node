@@ -1,8 +1,7 @@
 #include "triangle.hpp"
 #include "enums.hpp"
 
-#include <iostream>
-#include <string>
+// #include <string>
 
 using std::round;
 
@@ -40,8 +39,7 @@ Triangle::vec_side_components(const Triangle &tri, const Point3 &i) {
 
 Triangle::calc_percent_result
 Triangle::calc_percent_gnomonic(const Point3 &p) const {
-  // const Triangle &tri = *this;
-  int precision = std::numeric_limits<long double>::max_digits10;
+  // int precision = std::numeric_limits<long double>::max_digits10;
 
   const long double r = constants::radius;
   Point3 original_AB = this->B;
@@ -73,8 +71,9 @@ Triangle::calc_percent_gnomonic(const Point3 &p) const {
   const Triangle projected_tri = Triangle(A, B, C);
   const Point3 projected_p = projected_tri.plane_intersection(p);
 
-  std::cout << "\nmag_h: " << mag_h << "\nmag_cent: " << mag_cent
-            << "\nalpha: " << alpha << "\ncos(alpha): " << cos(alpha) << "\n\n";
+  // std::cout << "\nmag_h: " << mag_h << "\nmag_cent: " << mag_cent
+  //           << "\nalpha: " << alpha << "\ncos(alpha): " << cos(alpha) <<
+  //           "\n\n";
 
   Triangle::vec_side_components_result components =
       Triangle::vec_side_components(projected_tri, projected_p);
@@ -90,13 +89,13 @@ Triangle::calc_percent_gnomonic(const Point3 &p) const {
 
 Triangle::calc_percent_result
 Triangle::calc_percent_quaternion(const Point3 &p) const {
-  // throw std::logic_error("CalcPercent->quaternion not ready yet");
-  return {.percent_CA = -1, .percent_CB = -1};
+  throw std::logic_error("CalcPercent->quaternion not ready yet");
+  // so don't get warning
+  return {.percent_CA = (p.x * 0) - 1, .percent_CB = -1};
 }
 
 std::vector<std::vector<Point3>>
-Triangle::all_points(int res, ico::map_orientation mo,
-                     ico::rotation_method rm) const {
+Triangle::all_points(int res, ico::rotation_method rm) const {
   // empty 2d vec
   std::vector<std::vector<Point3>> points;
 
@@ -123,7 +122,9 @@ Triangle::all_points(int res, ico::map_orientation mo,
                                               num_divs)
             : Point3::all_row_points_quaternion(left_points[x], right_points[x],
                                                 num_divs);
-    points.push_back(new_points);
+    points.push_back(rm == ico::rotation_method::gnomonic
+                         ? Point3::spherify1D(new_points)
+                         : new_points);
   }
   return points;
 }
@@ -139,24 +140,15 @@ Triangle::lazy_points_around(Point3 &p, int res,
           ? this->calc_percent_gnomonic(p)
           : this->calc_percent_quaternion(p);
 
-  std::cout << "percents, percent_CA: " << std::to_string(percents.percent_CA)
-            << ", percent_CB: " << std::to_string(percents.percent_CB) << "\n";
+  // std::cout << "percents, percent_CA: " <<
+  // percents.percent_CA
+  //           << ", percent_CB: " << percents.percent_CB <<
+  //           "\n";
 
   // calculate percent of intersect component from C to A
   const int estimated_vert_center = this->direction == tri::pointing::UP
                                         ? round(nd - percents.percent_CA * nd)
                                         : round(percents.percent_CA * nd);
-  if (this->direction == tri::pointing::UP) {
-    std::cout << "tri pointing up, round(nd - percents.percent_CA * nd): "
-              << round(nd - percents.percent_CA * nd) << "\n";
-  } else {
-    std::cout << "\ntri pointing down, round(percents.percent_CA * nd): "
-              << round(percents.percent_CA * nd) << ", nd: " << nd
-              << ", inside round: " << percents.percent_CA * nd << "\n";
-  }
-
-  std::cout << "estimated_vert_center: "
-            << std::to_string(estimated_vert_center) << "\n";
 
   // lazy calculate points
   Point3::lazy_side_points_result side_point_result =
@@ -165,17 +157,9 @@ Triangle::lazy_points_around(Point3 &p, int res,
           : Point3::lazy_side_points_quaternion(*this, estimated_vert_center,
                                                 res);
 
-  // std::cout << "lazy side points gnomonic, lower_indx: "
-  //           << std::to_string(side_point_result.lower_indx) << "\n";
-
-  // replaced n with i
-  // int n = 0;
-
   std::vector<std::vector<Point3>> points;
 
   const int estimated_horz_center = round(percents.percent_CB * nd);
-  std::cout << "estimated_horz_center: "
-            << std::to_string(estimated_horz_center) << "\n";
   // while vertical points exist, generate points for their rows in range
   int lower_horz_bound;
   // not hit or miss like js hexmap, here lazy range starts from vec[0]
@@ -200,13 +184,13 @@ Triangle::lazy_points_around(Point3 &p, int res,
                                                right, num_div)
             : Point3::lazy_row_points_quaternion(estimated_horz_center, left,
                                                  right, num_div);
-    points.push_back(row_points_result.row_points);
+
+    points.push_back(rotation == ico::rotation_method::gnomonic
+                         ? Point3::spherify1D(row_points_result.row_points)
+                         : row_points_result.row_points);
     // better way to set lower_horz_bound? only need last value...
     lower_horz_bound = row_points_result.lower_indx;
   }
-  std::cout << "start_vert: " << std::to_string(side_point_result.lower_indx)
-            << "\n";
-  std::cout << "start_horz: " << std::to_string(lower_horz_bound);
 
   return {.points = points,
           .start_vert = side_point_result.lower_indx,
@@ -219,11 +203,9 @@ Point3 Triangle::generate_point(int res, int lower_vert, int lower_horz,
   // kind of hacky but works
   Point3::lazy_side_points_result vert_result =
       rotation == ico::rotation_method::gnomonic
-          ? Point3::lazy_side_points_gnomonic(*this, lower_vert, res,
-                                              constants::lazy_range, lower_vert,
-                                              lower_vert)
-          : Point3::lazy_side_points_quaternion(*this, lower_vert, res,
-                                                constants::lazy_range,
+          ? Point3::lazy_side_points_gnomonic(*this, lower_vert, res, 0,
+                                              lower_vert, lower_vert)
+          : Point3::lazy_side_points_quaternion(*this, lower_vert, res, 0,
                                                 lower_vert, lower_vert);
 
   const Point3 left = this->direction == tri::pointing::UP
@@ -234,14 +216,25 @@ Point3 Triangle::generate_point(int res, int lower_vert, int lower_horz,
                            : vert_result.pointsL[0];
   Point3::lazy_row_points_result horz_result =
       rotation == ico::rotation_method::gnomonic
-          ? Point3::lazy_row_points_gnomonic(lower_horz, left, right, nd,
-                                             constants::lazy_range, lower_horz,
-                                             lower_horz)
-          : Point3::lazy_row_points_quaternion(lower_horz, left, right, nd,
-                                               constants::lazy_range,
-                                               lower_horz, lower_horz);
+          ? Point3::lazy_row_points_gnomonic(lower_horz, left, right,
+                                             this->direction ==
+                                                     tri::pointing::UP
+                                                 ? vert_result.lower_indx
+                                                 : nd - vert_result.lower_indx,
+                                             0, lower_horz, lower_horz)
+          : Point3::lazy_row_points_quaternion(
+                lower_horz, left, right,
+                this->direction == tri::pointing::UP
+                    ? vert_result.lower_indx
+                    : nd - vert_result.lower_indx,
+                0, lower_horz, lower_horz);
 
-  return horz_result.row_points[0];
+  Point3 spherified = horz_result.row_points[0];
+  if (rotation == ico::rotation_method::gnomonic) {
+    spherified.spheriphy();
+  }
+
+  return spherified;
 };
 
 bool Triangle::contains_point(Point3 &point) const {

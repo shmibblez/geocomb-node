@@ -6,8 +6,6 @@
 #include <functional>
 #include <string>
 
-#include <iostream>
-
 using std::cos;
 using std::sin;
 using std::trunc;
@@ -199,17 +197,8 @@ Icosahedron::hash_properties Icosahedron::hash(Point3 p, int res) {
   Icosahedron::all_icosahedron_points lazy_points =
       this->lazy_points_around(p, res);
 
-  std::cout << "Icosahedron::hash, lazy points around arr size: "
-            << std::to_string(lazy_points.size())
-            << ", sub-vec size: " + std::to_string(lazy_points[0].size())
-            << "\n";
   // closest point that is also phex center
   GPoint3 cp = p.closest_point_2d(lazy_points);
-
-  std::cout << "Icosahedron::hash, closest point info:"
-            << "\n  x: " << cp.x << "\n  y: " << cp.y << "\n  z: " << cp.z
-            << "\n  row: " << cp.row << "\n  col: " << cp.col
-            << "\n  res: " << cp.res << "\n  isVert: " << cp.is_pc << "\ns";
 
   return Icosahedron::hash_properties{
       .res = res,
@@ -230,9 +219,6 @@ Icosahedron::lazy_points_around(Point3 p, int res) const {
 
   const int lower_vert = tri_points_around.start_vert;
   const int lower_horz = tri_points_around.start_horz;
-
-  std::cout << "lower_vert: " + std::to_string(lower_vert)
-            << ", lower_horz: " + std::to_string(lower_horz) << "\n";
 
   const std::vector<std::vector<Point3>> points = tri_points_around.points;
 
@@ -365,10 +351,9 @@ Icosahedron::lazy_points_around(Point3 p, int res) const {
 }
 
 Triangle Icosahedron::containing_triangle(Point3 p) const {
-  for (const Triangle t : this->tris) {
+  for (const Triangle &t : this->tris) {
     if (t.contains_point(p)) {
-      std::cout << "found containing tri, tri num: " << std::to_string(t.num)
-                << "\n";
+
       return t;
     }
   }
@@ -451,10 +436,10 @@ GPoint3 Icosahedron::parse_hash(Icosahedron::hash_properties hash) const {
 Icosahedron::all_icosahedron_points Icosahedron::all_points(int res) const {
   Icosahedron::all_icosahedron_points points;
   const int offset_amount = res * 3;
-  for (const Triangle t : this->tris) {
+  for (const Triangle &t : this->tris) {
     int offset;
     int range;
-    std::vector<std::vector<Point3>> ps = t.all_points(res, this->mo, this->rm);
+    std::vector<std::vector<Point3>> ps = t.all_points(res, this->rm);
     switch (t.pos) {
     case tri::position::TOP: {
       offset = 0;
@@ -537,14 +522,37 @@ Phex Icosahedron::not_lazy_containing_phex(Point3 p, int res) const {
   return *closest_phex;
 }
 
+/**
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ * IMPORTANT: node-addon-api specific code begins here
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ **/
+
 void Icosahedron::Init(Napi::Env env, Napi::Object *exports) {
-  Napi::Function func =
-      DefineClass(env, "Icosahedron",
-                  {
-                      Icosahedron::InstanceMethod(
-                          "pointFromCoords", &Icosahedron::pointFromCoords),
-                      Icosahedron::InstanceMethod("hash", &Icosahedron::hash),
-                  });
+  Napi::Function func = DefineClass(
+      env, "Icosahedron",
+      {
+          Icosahedron::InstanceMethod("pointFromCoords",
+                                      &Icosahedron::pointFromCoords),
+          Icosahedron::InstanceMethod("hash", &Icosahedron::hash),
+          Icosahedron::InstanceMethod("parseHash", &Icosahedron::parseHash),
+      });
 
   // Napi::FunctionReference *constructor = new Napi::FunctionReference();
   // *constructor = Napi::Persistent(func);
@@ -555,8 +563,8 @@ void Icosahedron::Init(Napi::Env env, Napi::Object *exports) {
 }
 
 Icosahedron::Icosahedron(const Napi::CallbackInfo &info)
-    : Napi::ObjectWrap<Icosahedron>(info), mo(ico::map_orientation::ECEF),
-      rm(ico::rotation_method::gnomonic), tris(Icosahedron::triangles()) {
+    : Napi::ObjectWrap<Icosahedron>(info), tris(Icosahedron::triangles()),
+      mo(ico::map_orientation::ECEF), rm(ico::rotation_method::gnomonic) {
   Napi::Env env = info.Env();
 
   std::string map_orientation_str = info[0].As<Napi::String>().Utf8Value();
@@ -569,8 +577,9 @@ Icosahedron::Icosahedron(const Napi::CallbackInfo &info)
     return;
   } else if (map_orientation_str != "dymaxion" &&
              map_orientation_str != "ECEF") {
-    Napi::TypeError::New(env, "unknown map orientation, recognized map "
-                              "orientations are \"ECEF\" and \"dymaxion\"")
+    Napi::TypeError::New(env,
+                         "unknown map orientation received. Recognized map "
+                         "orientations are \"ECEF\" and \"dymaxion\"")
         .ThrowAsJavaScriptException();
     return;
   }
@@ -582,8 +591,9 @@ Icosahedron::Icosahedron(const Napi::CallbackInfo &info)
     return;
   } else if (rotation_method_str != "quaternion" &&
              rotation_method_str != "gnomonic") {
-    Napi::TypeError::New(env, "unknown rotation method, recognized rotation "
-                              "methods are \"gnomonic\" and \"quaternion\"")
+    Napi::TypeError::New(
+        env, "unknown rotation method received. Recognized rotation "
+             "methods are \"gnomonic\" and \"quaternion\"")
         .ThrowAsJavaScriptException();
     return;
   }
@@ -630,4 +640,74 @@ Napi::Value Icosahedron::hash(const Napi::CallbackInfo &info) {
                            : "quaternion");
 
   return hash_props;
+}
+
+Napi::Value Icosahedron::parseHash(const Napi::CallbackInfo &info) {
+  const Napi::Env env = info.Env();
+  const Napi::Object obj = info[0].As<Napi::Object>();
+  // export class HashProperties {
+  //   res!: number;
+  //   row!: number;
+  //   col!: number;
+  //   rm!: RotationMethod;
+  //   mo!: MapOrientation;
+  // }
+  const int res = obj.Get("res").As<Napi::Number>().Uint32Value();
+  const int row = obj.Get("row").As<Napi::Number>().Uint32Value();
+  const int col = obj.Get("col").As<Napi::Number>().Uint32Value();
+  const std::string mo_str = obj.Get("mo").As<Napi::String>().Utf8Value();
+  const std::string rm_str = obj.Get("rm").As<Napi::String>().Utf8Value();
+
+  if (!GPoint3::is_phex_center(res, row, col)) {
+    Napi::Error::New(env, "point referenced by res, row, and col is not phex "
+                          "center, received values: res: " +
+                              std::to_string(res) +
+                              ", row: " + std::to_string(row) +
+                              ", col: " + std::to_string(col))
+        .ThrowAsJavaScriptException();
+  }
+
+  if (mo_str == "dymaxion") {
+    Napi::TypeError::New(env,
+                         "\"dymaxion\" map orientation currently unsupported")
+        .ThrowAsJavaScriptException();
+  } else if (mo_str != "dymaxion" && mo_str != "ECEF") {
+    Napi::TypeError::New(env, "Recognized map orientations are \"ECEF\" and "
+                              "\"dymaxion\", received map orientation: " +
+                                  mo_str)
+        .ThrowAsJavaScriptException();
+  }
+
+  if (rm_str == "quaternion") {
+    Napi::TypeError::New(env,
+                         "\"quaternion\" rotation method currently unsupported")
+        .ThrowAsJavaScriptException();
+  } else if (rm_str != "quaternion" && rm_str != "gnomonic") {
+    Napi::TypeError::New(
+        env, "unknown rotation method received. Recognized rotation "
+             "methods are \"gnomonic\" and \"quaternion\"")
+        .ThrowAsJavaScriptException();
+  }
+
+  const ico::map_orientation mo = mo_str == "dymaxion"
+                                      ? ico::map_orientation::dymaxion
+                                      : ico::map_orientation::ECEF;
+  const ico::rotation_method rm = rm_str == "quaternion"
+                                      ? ico::rotation_method::quaternion
+                                      : ico::rotation_method::gnomonic;
+
+  const GPoint3 pp = this->parse_hash(
+      {.res = res, .row = row, .col = col, .rm = rm, .mo = mo});
+
+  Napi::Object parsed_point = Napi::Object::New(env);
+  parsed_point.Set("x", pp.x);
+  parsed_point.Set("y", pp.y);
+  parsed_point.Set("z", pp.z);
+  parsed_point.Set("triNum", pp.tri_num);
+  parsed_point.Set("isPC", pp.is_pc);
+  parsed_point.Set("res", pp.res);
+  parsed_point.Set("row", pp.row);
+  parsed_point.Set("col", pp.col);
+
+  return parsed_point;
 }
